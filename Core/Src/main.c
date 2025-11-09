@@ -1,36 +1,46 @@
 #include <stdint.h>
+#include "init.h"
+#include "Interrupt.h"
+
+volatile uint8_t btnCount = 0;
+volatile uint8_t flag = 0;
+ 
 int main(void)
 {
-    *(uint32_t *)(0x40023800UL + 0x30UL) |= 0x06UL;     // Включение тактирования
-    *(uint32_t *)(0x40020400UL + 0x00UL) |= 0x4000UL;   // Настройка работы 7-го пина GPIOB в режиме вывода сигнала (OUTPUT)
-    *(uint32_t *)(0x40020400UL + 0x04UL) |= 0x00UL;     // Настройка на Push-Pull работу 7го пина GPIOB
-    *(uint32_t *)(0x40020400UL + 0x08UL) |= 0x4000UL;   // Настройка скорости пина на среднюю
-    *(uint32_t *)(0x40020400UL + 0x18UL) |= 0x800000UL; // Выключение светодида
+    RCC_INIT();
+    ITR_Init();
 
-    // Кнопку подключаем к PC13. Если кнопка сломана, то к PC12
-    // Ищем адрес периферии GPIOc
-    // Потом адрес offset
-    // Какие параметры чтобы на вход? Надо подать 00/01. Можно не прописывать ничего
-    // т.к. нужно установить 00, а это при сбросе питания
-    // тип выхода не трогаем
-    // регистр pull...не трогаем, т.к. это есть в схеме
-    // в input-data-registr. ЦОн хранит входные данные?
-    // любой периферии передать тактирование. Нужно GPIOcENABLE (6.3.10). Теперь надо настроить:
-    //  (1,0) - 2.
+    /*Настройка тактирования, светодиода */
+    SET_BIT(RCC->AHB1ENR, RCC_AHB1ENR_GPIOBEN | RCC_AHB1ENR_GPIOCEN | RCC_AHB1ENR_GPIOAEN);
+
+    SET_BIT(RCC->AHB1ENR, RCC_AHB1ENR_GPIOBEN);
+    SET_BIT(GPIOB->MODER, GPIO_MODER_MODE7_0); /* 01 */
+
+    /*-----------MCO2------------------------*/
+    // Необхоидимо настроить пины на выход
+    SET_BIT(GPIOC->MODER, GPIO_MODER_MODER9_1); // Alt. func
+
+    SET_BIT(GPIOC->OSPEEDR, GPIO_OSPEEDR_OSPEED9_Msk); // Нужна высокая ск., 11.
+    // CLEAR_BIT(GPIOC->AFR[1], GPIO_AFRH_AFSEL9);
+    MODIFY_REG(GPIOC->AFR[1], GPIO_AFRH_AFSEL9_Msk, 0x0); // выход MCO2.
+
+    /*-------------MCO1--------------------*/
+    // PA8, AF0 (0000)
+
+    SET_BIT(GPIOA->MODER, GPIO_MODER_MODE8_1);
+    SET_BIT(GPIOA->OSPEEDR, GPIO_OSPEEDR_OSPEED8);
+    CLEAR_BIT(GPIOA->AFR[1], GPIO_AFRH_AFSEL8);
+
     while (1)
     {
-
-        //*(uint32_t *)(0x40020400UL + 0x18UL) |= 0x80; // 1 на бит set светодиода
-        if (*(uint32_t *)(0x40020800UL + 0x10UL) & 0x2000UL)
-        
-        { // счёт с нуля, сравнение с pc13
-            *(uint32_t *)(0x40020400UL + 0x18UL) |= 0x80UL;
+        if (flag)
+        {
+            SET_BIT(GPIOB->BSRR, GPIO_BSRR_BS7);
         }
 
         else
         {
-            *(uint32_t *)(0x40020400UL + 0x18UL) |= 0x800000UL; // Выключение светодида
+            SET_BIT(GPIOB->BSRR, GPIO_BSRR_BR7);
         }
-
     }
 }
