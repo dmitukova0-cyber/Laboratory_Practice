@@ -1,140 +1,72 @@
-#include <stdint.h>
+#ifndef INIT_H
+#define INIT_H
+ 
+
 #include "../../CMSIS/Devices/STM32F4xx/Inc/stm32f4xx.h"
+#include <stdint.h>
 
-void GPIO_init__Memory(void);
-void GPIO_init_With_Myself_Macros(void);
-void GPIO_init_With_Myself_Macros2(void);
-void GPIO_init_With_Myself_Macros3(void);
-void GPIO_init_CMSIS(void);
+// Адреса портов и пинов
+#define LED_GREEN   (*(uint32_t*)(0x40020C00UL + 0x18UL)) // PD1
+#define LED_BLUE    (*(uint32_t*)(0x40020000UL + 0x18UL)) // PA0
+#define LED_RED     (*(uint32_t*)(0x40021000UL + 0x18UL)) // PE0
 
-#define RCC_AHB1ENR *(uint32_t *)(0x40023800UL + 0x30UL)
-#define RCC_GPIOA_EN 0x01UL
-#define RCC_GPIOB_EN 0x03UL
-#define RCC_GPIOC_EN 0x07UL
+//LID
+#define RCC_GPIO_EN                 (*(uint32_t*)(0x40023800+0x30UL))
+#define RCC_GPIOE_EN                0x10UL
 
-#define GPIOA_IDR *(uint32_t *)(0x40020000UL + 0x10UL)
-#define GPIOA_MODER *(uint32_t *)(0x40020000UL + 0x00UL)
-#define GPIOA_OTYPER *(uint32_t *)(0x40020000UL + 0x04UL)
-#define GPIOA_OSPEEDR *(uint32_t *)(0x40020000UL + 0x08UL)
-#define GPIOA_BSRR *(uint32_t *)(0x40020000UL + 0x18UL)
+//GPIOE_REG
+#define GPIOE_MODER_REG          (*(uint32_t*)(0x40021000UL + 0x00UL)) // настроили порт A0 на выход
+#define GPIOE_OTYPER_REG         (*(uint32_t*)(0x40021000UL + 0x04UL)) //настройка типа выхода
+#define GPIOE_OSPEEDR_REG        (*(uint32_t*)(0x40021000UL + 0x08UL)) //устанавливаем скорость работы порта
+#define GPIOE_PUPDR_REG          (*(uint32_t*)(0x40021000UL + 0x0CUL)) //no pull-resistor
+#define GPIOE_BSRR_REG           (*(uint32_t*)(0x40021000UL + 0x18UL)) //записываем или стираем бит
 
-#define GPIOB_MODER *(uint32_t *)(0x40020400UL + 0x00UL)
-#define GPIOB_OTYPER *(uint32_t *)(0x40020400UL + 0x04UL)
-#define GPIOB_OSPEEDR *(uint32_t *)(0x40020400UL + 0x08UL)
-#define GPIOB_BSRR *(uint32_t *)(0x40020400UL + 0x18UL)
+//GPIOE_BIT
+#define GPIOE_MODER_BIT          0b01UL
+#define GPIOE_OTYPER_BIT         0b0UL
+#define GPIOE_OSPEEDR_BIT        0b01Ul
+#define GPIOE_PUPDR_BIT          0b00UL
+#define GPIOE_BSRR_BIT           0x10000UL
 
-#define GPIOC_IDR *(uint32_t *)(0x40020800UL + 0x10UL)
-#define GPIOC_MODER *(uint32_t *)(0x40020800UL + 0x00UL)
-#define GPIOC_OTYPER *(uint32_t *)(0x40020800UL + 0x04UL)
-#define GPIOC_OSPEEDR *(uint32_t *)(0x40020800UL + 0x08UL)
-#define GPIOC_BSRR *(uint32_t *)(0x40020800UL + 0x18UL)
+//button
+#define RCC_GPIO_C               (*(uint32_t*)(0x40021000UL + 0x00UL))
+#define RCC_GPIOC                0x30UL
 
-#define GPIO_PIN_MED_14 0x10000000UL
-#define GPIO_PIN_OUT_14 0x10000000UL
-#define GPIO_PIN_RESET_14 0x40000000UL
-#define GPIO_PIN_SET_14 0x4000UL
+#define GPIOC_OTYPER_REG         (*(uint32_t*)(0x40021000UL + 0x04UL))
+#define GPIOC_PUPDR_REG          (*(uint32_t*)(0x40021000UL + 0x0CUL))
 
-#define GPIO_PIN_MED_7 0x4000UL
-#define GPIO_PIN_OUT_7 0x4000UL
-#define GPIO_OFF 0x00UL
-#define GPIO_PIN_RESET_7 0x800000UL
-#define GPIO_PIN_SET_7 0x80UL
-#define GPIO_PIN_IDR_13 0x2000UL
-
-// Для пина PA3(A0) и PC3(A2)
-#define GPIO_PIN_MED_3 0x4000UL
-#define GPIO_PIN_IN_3 0x00UL
-#define GPIO_PIN_OUT_3 0x40UL
-#define GPIO_OFF 0x00UL
-#define GPIO_PIN_RESET_3 0x80000UL
-#define GPIO_PIN_SET_3 0x08UL
-#define GPIO_PIN_IDR_3 0x08UL
-
-// Для пина PC0(A1)
-#define GPIO_PIN_MED_0 0x01UL
-#define GPIO_PIN_OUT_0 0x01UL
-#define GPIO_PIN_IN_0 0x00UL
-#define GPIO_OFF 0x00UL
-#define GPIO_PIN_RESET_0 0x10000UL
-#define GPIO_PIN_SET_0 0x01UL
-#define GPIO_PIN_IDR_0 0x01UL
-
-#define BIT_SET(REG, BIT) ((REG) |= (BIT))
-#define BIT_READ(REG, BIT) ((REG) & (BIT))
-
-// LB 2
-
-void RCC_INIT(void);
-void ITR_Init(void);
+#define GPIOC_OTYPER_BIT         0x4UL
+#define GPIOC_PUPDR_BIT          0x10UL
 
 
+#define MY_READ_BIT(REG, BIT)          ((REG) &= ~(BIT)) 
+#define MY_SET_BIT(REG, BIT)           ((REG) |= (BIT)) 
+
+// Инициализация портов
+void Init_PORT_D_withMemory();      // PD1 - светодиод (синий)
+void Init_PORT_A_withMemory();      // PA0 - светодиод (зелёный)
+void Init_PORT_E_withMemory();      // PE0 - светодиод (красный)
+
+void Init_Port_D_withMemory_Button(); // PD0 - кнопка 1
+void Init_Port_A_withMemory_Button(); // PA4 - кнопка 2
+void Init_Port_E_withMemory_Button(); // PE2 - кнопка 3
+
+void Init_Port_C_with_Memory_Button(); //P13 - кнопка
 
 
-// #include <stdint.h>
-// #include "../../CMSIS/Devices/STM32F4xx/Inc/stm32f4xx.h"
-// #include "stm32f4xx.h"
+void HandleButton(uint8_t btnState, uint8_t base, uint8_t rot);
 
-// void GPIO_init__Memory(void);
-// void GPIO_init_With_Myself_Macros (void);
-// void GPIO_init_With_Myself_Macros2 (void);
-// void GPIO_init_With_Myself_Macros3 (void);
-// void GPIO_init_CMSIS(void);
+//-----------------------КОД ДЛЯ ЗАЩИТЫ-----------------------//
 
-// #define RCC_AHB1ENR         *(uint32_t *)(0x40023800UL + 0x30UL)
-// #define RCC_GPIOA_EN        0x01UL
-// #define RCC_GPIOB_EN        0x03UL
-// #define RCC_GPIOC_EN        0x07UL
+void handle_button(uint8_t btnNum,   // номер кнопки: 0, 1, 2 (для кнопок 1,2,3)
+                          uint8_t b,        // текущее состояние кнопки (0/1)
+                          uint8_t b4,       // состояние кнопки 4 (для prevB4)
+                          uint8_t rot, 
+                          uint8_t *prevB, 
+                          uint8_t *prevB4,
+                          uint8_t *activeLed,
+                          uint8_t *freqIndex);
 
-// #define GPIOA_IDR           *(uint32_t *)(0x40020000UL + 0x10UL)
-// #define GPIOA_MODER         *(uint32_t *)(0x40020000UL + 0x00UL)
-// #define GPIOA_OTYPER        *(uint32_t *)(0x40020000UL + 0x04UL)
-// #define GPIOA_OSPEEDR       *(uint32_t *)(0x40020000UL + 0x08UL)
-// #define GPIOA_BSRR          *(uint32_t *)(0x40020000UL + 0x18UL)
+void blink_active_led(uint8_t activeLed, uint8_t freqIndex);
 
-// #define GPIOB_MODER         *(uint32_t *)(0x40020400UL + 0x00UL)
-// #define GPIOB_OTYPER        *(uint32_t *)(0x40020400UL + 0x04UL)
-// #define GPIOB_OSPEEDR       *(uint32_t *)(0x40020400UL + 0x08UL)
-// #define GPIOB_BSRR          *(uint32_t *)(0x40020400UL + 0x18UL)
-
-// #define GPIOC_IDR           *(uint32_t *)(0x40020800UL + 0x10UL)
-// #define GPIOC_MODER         *(uint32_t *)(0x40020800UL + 0x00UL)
-// #define GPIOC_OTYPER        *(uint32_t *)(0x40020800UL + 0x04UL)
-// #define GPIOC_OSPEEDR       *(uint32_t *)(0x40020800UL + 0x08UL)
-// #define GPIOC_BSRR          *(uint32_t *)(0x40020800UL + 0x18UL)
-
-// #define GPIO_PIN_MED_14     0x10000000UL
-// #define GPIO_PIN_OUT_14     0x10000000UL
-// #define GPIO_PIN_RESET_14   0x40000000UL
-// #define GPIO_PIN_SET_14     0x4000UL
-
-// #define GPIO_PIN_MED_7      0x4000UL
-// #define GPIO_PIN_OUT_7      0x4000UL
-// #define GPIO_OFF            0x00UL
-// #define GPIO_PIN_RESET_7    0x800000UL
-// #define GPIO_PIN_SET_7      0x80UL
-// #define GPIO_PIN_IDR_13     0x2000UL
-
-// //Для пина PA3(A0) и PC3(A2)
-// #define GPIO_PIN_MED_3      0x4000UL
-// #define GPIO_PIN_IN_3       0x00UL
-// #define GPIO_PIN_OUT_3      0x40UL
-// #define GPIO_OFF            0x00UL
-// #define GPIO_PIN_RESET_3    0x80000UL
-// #define GPIO_PIN_SET_3      0x08UL
-// #define GPIO_PIN_IDR_3      0x08UL
-
-// //Для пина PC0(A1)
-// #define GPIO_PIN_MED_0      0x01UL
-// #define GPIO_PIN_OUT_0      0x01UL
-// #define GPIO_PIN_IN_0      0x00UL
-// #define GPIO_OFF            0x00UL
-// #define GPIO_PIN_RESET_0    0x10000UL
-// #define GPIO_PIN_SET_0      0x01UL
-// #define GPIO_PIN_IDR_0      0x01UL
-
-// #define BIT_SET(REG, BIT)   ((REG) |= (BIT))
-// #define BIT_READ(REG, BIT)  ((REG) & (BIT))
-
-//  // LB 2
-
-// void RCC_INIT(void);
+#endif

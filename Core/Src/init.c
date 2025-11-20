@@ -1,149 +1,186 @@
-#include "../Inc/init.h"
-#include "init.h"
+ #include "../Inc/init.h"
 
-void RCC_INIT(void)
+ // Есть порты: portA, portB, portC, portD
+ //частота
+#define HPERIOD_F1  200000UL 
+#define HPERIOD_F2   80000UL   
+#define HPERIOD_F3   300000UL 
+
+//(светодиод pd1)
+void Init_PORT_D_withMemory(void) 
 {
-
-    // // GPIO INIT
-    // RCC_AHB1ENR |= RCC_GPIOA_EN | RCC_GPIOB_EN | RCC_GPIOC_EN; // светодиод, выход MCO
-
-    // BIT_SET(GPIOB_MODER, GPIO_PIN_OUT_7);
-    // BIT_SET(GPIOB_OTYPER, GPIO_OFF);
-    // BIT_SET(GPIOB_OSPEEDR, GPIO_PIN_MED_7);
-    // BIT_SET(GPIOB_BSRR, GPIO_PIN_RESET_7);
-
-    SET_BIT(GPIOC->MODER, GPIO_MODER_MODER9_1);           // Настраиваем пин на альтернативный режим
-    SET_BIT(GPIOC->OSPEEDR, GPIO_OSPEEDR_OSPEED9_Msk);    // Настраиваем пин на максимальную скорость работы
-    MODIFY_REG(GPIOC->AFR[1], GPIO_AFRH_AFSEL9_Msk, 0x0); // Выбираем тип альтернативной функции – Выход MCO2
-
-    MODIFY_REG(RCC->CR, RCC_CR_HSITRIM, 0x80UL);
-    CLEAR_REG(RCC->CFGR);
-    while (READ_BIT(RCC->CFGR, RCC_CFGR_SWS) != RESET)
-        ;
-    CLEAR_BIT(RCC->CR, RCC_CR_PLLON);
-    while (READ_BIT(RCC->CR, RCC_CR_PLLRDY) != RESET)
-        ;
-    CLEAR_BIT(RCC->CR, RCC_CR_HSEON | RCC_CR_CSSON);
-    while (READ_BIT(RCC->CR, RCC_CR_HSERDY) != RESET)
-        ;
-    CLEAR_BIT(RCC->CR, RCC_CR_HSEBYP);
-
-    CLEAR_BIT(RCC->CR, RCC_CR_HSION);
-
-    SET_BIT(RCC->CR, RCC_CR_HSEON); // Включение внешнего источника тактирования
-    while (READ_BIT(RCC->CR, RCC_CR_HSERDY) == RESET)
-        ;
-    SET_BIT(RCC->CR, RCC_CR_CSSON); // Включение Clock Security
-
-    // PLL configurator
-    CLEAR_REG(RCC->PLLCFGR);
-    SET_BIT(RCC->PLLCFGR, RCC_PLLCFGR_PLLSRC_HSE);                                                            // Источник тактирования HSE
-    SET_BIT(RCC->PLLCFGR, RCC_PLLCFGR_PLLM_2);                                                                // деление тактирования на 4
-    SET_BIT(RCC->PLLCFGR, RCC_PLLCFGR_PLLN_3 | RCC_PLLCFGR_PLLN_5 | RCC_PLLCFGR_PLLN_6 | RCC_PLLCFGR_PLLN_8); // число 360 в  bin
-    SET_BIT(RCC->PLLCFGR, RCC_PLLCFGR_PLLP_0);                                                                // Деление после умножения на 4 (PLLP). теперь нужно делить на 4. Для этого передать 01
-    SET_BIT(RCC->PLLCFGR, RCC_PLLCFGR_PLLQ_0 | RCC_PLLCFGR_PLLQ_1 | RCC_PLLCFGR_PLLQ_2 | RCC_PLLCFGR_PLLQ_3); // Настроили PLLQ (деление после умножения на 15)
-
-    // tact configurator
-    // SET_BIT(RCC->CFGR, RCC_CFGR_SW_1);
-
-    /* while (READ_BIT(RCC->CFGR, RCC_CFGR_SWS_1) == RESET); */  // не запустится pll
-    SET_BIT(RCC->CFGR, RCC_CFGR_SW_PLL);                        // В качестве системного тактирования выбран PLL
-    SET_BIT(RCC->CFGR, RCC_CFGR_HPRE_DIV1);                      // предделитель шины AHB1 настроен на 1 без деления
-    SET_BIT(RCC->CFGR, RCC_CFGR_PPRE1_DIV4);                     // предделитель шины AHB1 настроен на 4 ОНА от 45
-    SET_BIT(RCC->CFGR, RCC_CFGR_PPRE2_DIV2);                     // предделитель шины APB2 настроен на 2 ОНА от 90
-    SET_BIT(RCC->CFGR, RCC_CFGR_MCO1);                           // настройка вывода на MCO1
-    CLEAR_BIT(RCC->CFGR, RCC_CFGR_MCO2);                         // Настройка вывода частоты SYSCLOCK на MSO2
-    SET_BIT(RCC->CFGR, RCC_CFGR_MCO1PRE_2 | RCC_CFGR_MCO1PRE_1); // Предделитель 2 для вывода на MCO1
-    SET_BIT(RCC->CFGR, RCC_CFGR_MCO2PRE_2 | RCC_CFGR_MCO2PRE_1); //
-
-    SET_BIT(FLASH->ACR, FLASH_ACR_LATENCY_5WS); // Утановка 5 циклов ожидания для FLASH памяти
-    SET_BIT(RCC->CR, RCC_CR_PLLON);             // Включение PLL (?)
-    while (READ_BIT(RCC->CR, RCC_CR_PLLRDY) == RESET)
-        ;
+    (*(uint32_t*)(0x40023800+0x30UL)) |= 0x08UL; 
+    (*(uint32_t*)(0x40020C00UL + 0x00UL)) |= (0b0100UL); 
+    (*(uint32_t*)(0x40020C00UL + 0x04UL)) |= 0b00UL;  
+    (*(uint32_t*)(0x40020C00UL + 0x08UL)) |= (0b0100UL); 
+    (*(uint32_t*)(0x40020C00UL + 0x0CUL) )|= (0b00UL); 
+    (*(uint32_t*)(0x40020C00UL + 0x18UL)) |= (0x20000UL); 
 }
 
-void ITR_Init(void)
+//светодиод PA0 через CMSIS
+void Init_PORT_A_withMemory(void)
 {
-    SET_BIT(RCC->APB2ENR, RCC_APB2ENR_SYSCFGEN);
-    /*//Это шутка, которая позволяет настроить мультиплексоры. Разного рода
-    регистры: SYSCFG. Объединение нулевой линии (нулевые порты контроллера)
-    EXTI1 - первая линия и т.д.
-    Мы подключаем кнопку на PC13, на уроке PC12. Настраиваем для 12 линии
-    SYSCFG разделили на 2 области, 16 битов старш другому, 16 битов младшему именно EXTI
-    Там разделение на 4 линии. Во второй от 4 до 7, в третьем от 8 до 11, в четвёртом от 12 до ...
-    Мы будем брать PC12, следовательно значение для PC12.
-    APB2ENR (записали 1 для тактирвоания)
-    */
-    SET_BIT(SYSCFG->EXTICR[3], SYSCFG_EXTICR4_EXTI13_PC);
-    /*то что на 13pc, будет выходить на контроллер прерываний*/
+    SET_BIT(RCC->AHB1ENR, RCC_AHB1ENR_GPIOAEN);        //тактирование
+    SET_BIT(GPIOA->MODER, GPIO_MODER_MODE0_0);         //настроили на выход MODER
+    CLEAR_BIT(GPIOA->OTYPER, GPIO_OTYPER_OT0);         //OTYPER настраивается тип выход, по умолчанию push-pull как нам и надо
+    SET_BIT(GPIOA->OSPEEDR, GPIO_OSPEEDER_OSPEEDR0_0); //Скорость medium
+    CLEAR_BIT(GPIOA->PUPDR, GPIO_PUPDR_PUPD0);         //no pull-resistor
+    SET_BIT(GPIOA->BSRR, GPIO_BSRR_BR0);               //BSRR выключили LED PA0
+}
 
-    /*Пропишем сами регистры EXTI, 12.3*/
-    // Не хотим маскировать
-    SET_BIT(EXTI->IMR, EXTI_IMR_MR13);
-    // EMR пропускаем
+//светодиод PE0 через собственные макросы
 
-    // Rising cl. rising trigger selection reg. по фронту, з. на RT 1
-    SET_BIT(EXTI->RTSR, EXTI_RTSR_TR13);
-    
-    // Теперь спад.
-    CLEAR_BIT(EXTI->FTSR, EXTI_FTSR_TR13);
+void Init_PORT_E_withMemory(void)
+{
+    MY_SET_BIT(RCC_GPIO_EN, RCC_GPIOE_EN);
+    MY_SET_BIT(GPIOE_MODER_REG, GPIOE_MODER_BIT);
+    MY_SET_BIT(GPIOE_OTYPER_REG, GPIOE_OTYPER_BIT);
+    MY_SET_BIT(GPIOE_OSPEEDR_REG, GPIOE_OSPEEDR_BIT);
+    MY_SET_BIT(GPIOE_PUPDR_REG, GPIOE_PUPDR_BIT);   
+    MY_SET_BIT(GPIOE_BSRR_REG, GPIOE_BSRR_BIT);
+}
 
-    //Нужно настроить NVIC
-    //см. programming manual 4.3, 
-    NVIC_SetPriority(EXTI15_10_IRQn, NVIC_EncodePriority(NVIC_GetPriorityGrouping(),0,0));
-    NVIC_EnableIRQ(EXTI15_10_IRQn); //вкючаем по вектору. Все вектора в ассемблерном файле  (ext interrupts)
+//кнопка PD0
+void Init_Port_D_withMemory_Button(void)
+{ 
+    (*(uint32_t*)(0x40020C00UL + 0x00UL)) |= 0b00UL;                 //настроили на вход MODER
+    (*(uint32_t*)(0x40020C00UL + 0x04UL)) |= 0b0UL;                   //OTYPER настраивается тип выход, по умолчанию push-pull как нам и надо
+    (*(uint32_t*)(0x40020C00UL + 0x0CUL)) |= 0b01UL;                    //  pull-up resistor
+}
 
-    
-
+//кнопка PA4
+void Init_Port_A_withMemory_Button(void)
+{ 
+   *(uint32_t*)(0x40020000UL + 0x00UL) &= ~0xC000UL;                    //Явное обнуление, BIT_CLEAR
+   *(uint32_t*)(0x40020000UL + 0x04UL) &= ~0x80UL;                      //OTYPER настраивается тип выход, по умолчанию push-pull как нам и надо
+   *(uint32_t*)(0x40020000UL + 0x0CUL) &= ~0xC000UL;                    // Сначала очищаем
+    (*(uint32_t*)(0x40020000UL + 0x0CUL)) |= 0b0000100000000UL;          // Затем устанавливаем pull-up (01)
 
 }
 
+//кнопка PE2
+void Init_Port_E_withMemory_Button(void)
+{
+    *(uint32_t*)(0x40021000UL + 0x00UL) &= ~0x30UL; 
+    *(uint32_t*)(0x40021000UL + 0x04UL) &= ~0x4UL;                          //OTYPER настраивается тип выход, по умолчанию push-pull как нам и надо
+    *(uint32_t*)(0x40021000UL + 0x0CUL) |= 0x10UL;                      //  pull-resistor
+}
+
+//кнопка PC13
+void Init_Port_C_with_Memory_Button(void)
+{
+    (*(uint32_t*)(0x40023800 + 0x30UL)) |= 0x04UL;                      // тактирование порта C
+    *(uint32_t*)(0x40020800UL + 0x00UL) &= ~0xC000000UL;                 // MODER13 = 00
+    *(uint32_t*)(0x40020800UL + 0x04UL) &= ~0x2000UL;
+    *(uint32_t*)(0x40020800UL + 0x0CUL) |=  0x8000000;               // PUPDR13 = 01 (pull-up)
+}
+
+// Функция обработки кнопки 1–3
+
+void HandleButton(uint8_t btnState, uint8_t base, uint8_t rot)
+{
+
+    if (btnState != 0) return;
+
+    uint8_t tgt = base + rot;
+    tgt = (base + rot) % 3;
+
+    if (tgt == 0)
+    {
+        // PD1 ON
+        *(uint32_t*)(0x40020C00UL + 0x18UL) = (1UL << 1);
+    }
+    else if (tgt == 1)
+    {
+        // PA0 ON
+        *(uint32_t*)(0x40020000UL + 0x18UL) = (1UL << 0);
+    }
+    else // tgt == 2
+    {
+        // PE0 ON
+        *(uint32_t*)(0x40021000UL + 0x18UL) = (1UL << 0);
+    }
+}
 
 
-// void GPIO_Init_With_Myself_Macros(void)
-// {
-//     RCC_GPIO_EN |= RCC_GPIOB_EN | RCC_GPIOC_EN;
+//-----------------------КОД ДЛЯ ЗАЩИТЫ-----------------------//
 
-//     SET1_BIT(GPIOB_MODER, GPIOB_MODE_PIN7_OUT);
-//     SET1_BIT(GPIOB_OTYPER, GPIOB_OTYPE_PIN7_PP);
-//     SET1_BIT(GPIOB_OSPEEDR, GPIOB_OSPEED_PIN7_MID);
-//     SET1_BIT(GPIOB_BSRR, GPIOB_BSRR_PIN7_RESET);
+void blink_active_led(uint8_t activeLed, uint8_t freqIndex)
+{
+    if (activeLed != 0xFF) 
+    {
+        uint32_t h = (freqIndex == 0) ? HPERIOD_F1 : (freqIndex == 1) ? HPERIOD_F2 : HPERIOD_F3;
 
+        for (volatile uint32_t i = 0; i < h; ++i) __asm__("nop");
 
-//  }
+        // инвертируем выбранный светодиод через ODR/BSRR
+        if (activeLed == 0) 
+        {
+            uint32_t odr = (*(uint32_t*)(0x40020C00UL + 0x14UL) >> 1) & 1U; // PD1
+            if (odr) *(uint32_t*)(0x40020C00UL + 0x18UL) = (1UL << (1+16)); 
+            else     *(uint32_t*)(0x40020C00UL + 0x18UL) = (1UL << 1);
+        }
+        else if (activeLed == 1) 
+        {
+            uint32_t odr = (*(uint32_t*)(0x40020000UL + 0x14UL) >> 0) & 1U; // PA0
+            if (odr) *(uint32_t*)(0x40020000UL + 0x18UL) = (1UL << (0+16));
+            else     *(uint32_t*)(0x40020000UL + 0x18UL) = (1UL << 0);
+        } 
+        else if (activeLed == 2)
+        {
+            uint32_t odr = (*(uint32_t*)(0x40021000UL + 0x14UL) >> 0) & 1U; // PE0
+            if (odr) *(uint32_t*)(0x40021000UL + 0x18UL) = (1UL << (0+16)); 
+            else     *(uint32_t*)(0x40021000UL + 0x18UL) = (1UL << 0);
+        }
+    } 
+    else 
+    {
+        // никто не активен - погасим всё и маленькая пауза
+        *(uint32_t*)(0x40020000UL + 0x18UL) = (1UL << (0+16));
+        *(uint32_t*)(0x40020C00UL + 0x18UL) = (1UL << (1+16));
+        *(uint32_t*)(0x40021000UL + 0x18UL) = (1UL << (0+16));
+        for (volatile int d=0; d<2000; ++d) __asm__("nop");
+    }
+}
 
+void handle_button(uint8_t btnNum,   // номер кнопки: 0, 1, 2 (для кнопок 1,2,3)
+                          uint8_t b,        // текущее состояние кнопки (0/1)
+                          uint8_t b4,       // состояние кнопки 4 (для prevB4)
+                          uint8_t rot, 
+                          uint8_t *prevB, 
+                          uint8_t *prevB4,
+                          uint8_t *activeLed,
+                          uint8_t *freqIndex)
+{
+    // обновляем состояние кнопки 4
+    *prevB4 = b4;
 
+    if (*prevB == 1 && b == 0)  
+    {
+        uint8_t tgt = btnNum + rot; 
+        if (tgt >= 3) tgt -= 3; 
 
-// void RCC_Ini(void)
-// {
-// /* Предварительная очистка регистров RCC */
-// MODIFY_REG(RCC->CR, RCC_CR_HSITRIM, 0x80U);
-// CLEAR_REG(RCC->CFGR);
-// while(READ_BIT(RCC->CFGR, RCC_CFGR_SWS) != RESET);
-// CLEAR_BIT(RCC->CR, RCC_CR_PLLON);
-// while (READ_BIT(RCC->CR, RCC_CR_PLLRDY) != RESET);
-// CLEAR_BIT(RCC->CR, RCC_CR_HSEON | RCC_CR_CSSON);
-// while (READ_BIT(RCC->CR, RCC_CR_HSERDY) != RESET);
-// CLEAR_BIT(RCC->CR, RCC_CR_HSEBYP);
+        if (*activeLed != tgt) 
+        {
+            // гасим предыдущий светодиод
+            if (*activeLed == 0) *(uint32_t*)(0x40020C00UL + 0x18UL) = (1UL << (1+16));
+            if (*activeLed == 1) *(uint32_t*)(0x40020000UL + 0x18UL) = (1UL << (0+16));
+            if (*activeLed == 2) *(uint32_t*)(0x40021000UL + 0x18UL) = (1UL << (0+16));
 
-// /* Настройка главного регистра RCC */
-// SET_BIT(RCC->CR, RCC_CR_HSEON); //Запускаем внешний кварцевый
-// while(READ_BIT(RCC->CR, RCC_CR_HSERDY) == RESET); 
-// CLEAR_BIT(RCC->CR, RCC_CR_HSEBYP); 
-// SET_BIT(RCC->CR, RCC_CR_CSSON); //Запустим Clock detector
+            *activeLed = tgt;
+            *freqIndex = 0;  // начинаем с первой частоты
 
-// CLEAR_REG(RCC->PLLCFGR);
-// SET_BIT(RCC->PLLCFGR, RCC_PLLCFGR_PLLSRC_HSE);
-// SET_BIT(RCC->PLLCFGR, RCC_PLLCFGR_PLLM_2);
-// SET_BIT(RCC->PLLCFGR, RCC_PLLCFGR_PLLN_3 | RCC_PLLCFGR_PLLN_5 | RCC_PLLCFGR_PLLN_6 | RCC_PLLCFGR_PLLN_8); //настройка умножениея на 360 (PLLN)
-// CLEAR_BIT(RCC->PLLCFGR, RCC_PLLCFGR_PLLP_0);
-// SET_BIT(RCC->PLLCFGR, RCC_PLLCFGR_PLLQ_0 | RCC_PLLCFGR_PLLQ_1 | RCC_PLLCFGR_PLLQ_2 | RCC_PLLCFGR_PLLQ_3);//деление частот после умножения на 15(PLLQ)
+            if (*activeLed == 0) *(uint32_t*)(0x40020C00UL + 0x18UL) = (1UL << 1);
+            if (*activeLed == 1) *(uint32_t*)(0x40020000UL + 0x18UL) = (1UL << 0);
+            if (*activeLed == 2) *(uint32_t*)(0x40021000UL + 0x18UL) = (1UL << 0);
+        } 
+        else 
+        {
+            // повторное нажатие — смена частоты
+            (*freqIndex)++;
+            if (*freqIndex >= 3) *freqIndex = 0;
+        }
+    }
 
-// SET_BIT(RCC->CFGR, RCC_CFGR_SW_PLL);            //в качестве системного тактирования выбрал PLL
-// SET_BIT(RCC->CFGR, RCC_CFGR_HPRE_DIV1);         //предварительные шины AHB1 настроен на 1(без деления)
-// SET_BIT(RCC->CFGR, RCC_CFGR_PPRE1_DIV4);        //предделитель шины APB1 настроен на 4
-// SET_BIT(RCC->CFGR, RCC_CFGR_PPRE2_DIV2);        //предделитель шины APB1 настроен на 2
-// SET_BIT(RCC->CFGR, RCC_CFGR_MCO1);              //настройка вывода частоты на MCO1
-// CLEAR_BIT(RCC->CFGR, RCC_CFGR_MCO1PRE_2);        //предделитель шины AHB1
-// SET_BIT(RCC->CFGR, RCC_CFGR_MCO2);
-//}
+    *prevB = b;
+}
